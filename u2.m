@@ -1,0 +1,41 @@
+
+N=200; % antal intervall
+T=2; % sluttid
+dx=1/N; % steglängd i rummet
+dt=dx/2.0; % tidssteg, tänk på stabilitetsvillkoren
+M=round(T/dt); % antal tidsteg
+c=1; % våghastighet
+% allokering av minne
+u=zeros(N-1,M+1); % u(n,m) lösningens värde vid tid (m-1)*dt i position n*dx
+p=zeros(N-1,M+1); % p=u’
+A=zeros(N-1,N-1); % Au är differensapproximation av d^2 u/dx^2
+x = dx*(1:N-1)’; % x(n) är n*dx
+E = zeros(1,M+1); % För att beräkna energin i varje tidssteg.
+%Skapa matrisen A
+
+%Sätt begynnelsedata för u och p.
+...
+%Räkna ut energin E vid tiden 0.
+....
+nframe=M+1; % kommando för film
+mov(1:nframe)= struct(’cdata’,[],’colormap’,[]);
+figure;
+plot(X,u(:,1), ’b’, ’Linewidth’, 1); %Plot vid tiden t=0.
+axis([0 1 -1 1])
+set(gca, ’nextplot’, ’replacechildren’)
+drawnow
+mov(1)=getframe(gcf); %Första frame i filmen.
+for m=1:M % tidstegning med symplektiska Euler
+...
+X = [0;x;L]; U = [0;u(:,m);0];
+plot(X, U, ’b’, ’Linewidth’, 1)
+hold on;
+%Plotta även lösningen från d’Alemberts formel
+.....
+text(0.05,-0.8, sprintf(’t=%.2f’, t))
+set(gca, ’nextplot’, ’replacechildren’)
+drawnow
+mov(m+1)=getframe(gcf);
+%Räkna ut energin av den numeriska lösningen vid detta tidsstag
+.....
+end
