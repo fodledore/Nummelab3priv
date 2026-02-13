@@ -13,7 +13,7 @@ x = dx*(1:N-1)'; % x(n) är n*dx
 E = zeros(1,M+1); % För att beräkna energin i varje tidssteg.
 
 %% Skapa matrisen A
-A = -2*eye(N-1);
+A = A -2*eye(N-1);
 B = zeros(N-1,N-1);
 for i = 1:N-2
     B(i, i+1) = 1;
@@ -26,7 +26,9 @@ for i = 1:N-1
 end
 %Händer inget med p
 %% Räkna ut energin E vid tiden 0.
-....
+size(u(:, 1))
+size(A)
+E(1) = energy(u(:, 1), p(:, 1), c, A)
 nframe=M+1; % kommando för film
 mov(1:nframe)= struct('cdata',[],'colormap',[]);
 figure;
@@ -48,7 +50,14 @@ hold on;
 t = m*dt;
 
 %%Plotta även lösningen från d’Alemberts formel
-.....
+%for j = 1:N-1
+%    u(j, m+1) = 0.5*(g(x(j)+c*t)-g(x(j)-c*t));
+%end
+
+%Xa = [0;x;L]; Ua = [0;u(:,m);0];
+%plot(Xa, Ua, 'b', 'Linewidth', 1)
+%hold on;
+
 text(0.05,-0.8, sprintf('t=%.2f', t))
 set(gca, 'nextplot', 'replacechildren')
 drawnow
@@ -56,4 +65,11 @@ mov(m+1)=getframe(gcf);
 
 %Räkna ut energin av den numeriska lösningen vid detta tidsstag
 .....
+end
+
+function en  = energy(u, p, c, A)
+%tar in vektorer u och p och beräknar energin för en tidpunkt
+udd = c^2*A*u;
+size(udd)
+en = 0.5*(norm(p)^2 -(u*udd));
 end
