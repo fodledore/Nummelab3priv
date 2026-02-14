@@ -1,37 +1,48 @@
 %% Uppgift 1
 a = 0.5;
 y0 = [1-a;0;0;sqrt((1+a)/(1-a))];
-%% d)
-N = 10000;
 t_end = 100;
-h=t_end/N;
+N1 = 200000; %Första ordningens metoder
+h1 = t_end/N1;
+
+N2 = 10000; %Andra ordningens metoder
+h2 = t_end/N2;
 
 %Framåt Euler
-y_feuler = fram_euler(y0, N, t_end);
+y_feuler = fram_euler(y0, N2, t_end);
 energi_feuler = energi(y_feuler);
-size(y_feuler)
 q1f = y_feuler(:,1);
 q2f = y_feuler(:,2);
 
 figure
-plot(0:h:t_end, q1f, 0:h:t_end, q2f, 0:h:t_end, energi_feuler)
+plot(0:h2:t_end, q1f, 0:h2:t_end, q2f, 0:h2:t_end, energi_feuler)
+title('Framåt Euler med energi')
+legend('q1', 'q2', 'Energi')
 
 %Bakåt Euler
-y_beuler = bak_euler(y0, N, t_end);
-size(y_beuler)
+y_beuler = bak_euler(y0, N1, t_end); 
+energi_beuler = energi(y_beuler);
 q1b = y_beuler(:,1);
 q2b = y_beuler(:,2);
+
 figure
-plot(0:h:t_end, q1b, 0:h:t_end, q2b)
+plot(0:h1:t_end, q1b, 0:h1:t_end, q2b, 0:h1:t_end, energi_beuler)
+title('Bakåt Euler med energi')
+legend('q1', 'q2', 'Energi')
 
 %Symplektisk Euler 
-y_seuler = symp_euler(y0, N, t_end);
+y_seuler = symp_euler(y0, N2, t_end);
 energi_seuler = energi(y_seuler);
 q1s = y_seuler(:,1);
 q2s = y_seuler(:,2);
+
 figure
-plot(0:h:t_end, q1s, 0:h:t_end, q2s, 0:h:t_end, energi_seuler)
+plot(0:h2:t_end, q1s, 0:h2:t_end, q2s, 0:h2:t_end, energi_seuler)
+title('Symplektisk Euler med energi')
+legend('q1', 'q2', 'Energi')
 %% Funktioner 
+%ATT GÖRA: Effektivare med matriser för y, snyggare med norm(q)
+
 function ydot = kepler(y)
 %y = (q1, q2, p1, p2)
 q1dot = y(3);
@@ -42,45 +53,43 @@ ydot = [q1dot;q2dot;p1dot;p2dot];
 end
 
 function y_values = fram_euler(y0, N, t_end)
-%UNTITLED3 Summary of this function goes here
-%   Detailed explanation goes here
 h = t_end/N;
 y = y0;
-y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)];
+y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)]';
 for i  = 1:N+1
-    for k = 1:4
-        y_values(i,k) = y(k);
-    end
-    y = y+h*kepler(y);
+    y_values(:, i) = y;
+    y = y+h*kepler(y); %y(n+1) = y(n) +h*y(n)dot
 end
+y_values = y_values';
 end
 
 function y_values = bak_euler(y0, N, t_end)
-%DENNA FUNKAR INTE; VAD HÄNDER?
+%Bakåt Euler
+%Denna är första ordningen så kräver mindre tiddsteg. 
 h = t_end/N;
 y = y0;
-y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)];
+y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)]';
 for i  = 1:N
-    for k = 1:4
-       y_values(i,k) = y(k);
-    end
-    y = newton_bak(y, 10^(-6), h);
+    y_values(:, i) = y;
+    y = newton_bak(y, 10^(-6), h); %Lös olinjärt ekvationssystem med Newton
 end
+y_values = y_values'; %Gillar att ha q1 till p2 i kolumnerna
 end
 
 function y_values = symp_euler(y0, N, t_end)
+%Symplektisk Euler
 h = t_end/N;
 y = y0;
-y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)];
+y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)]';
 for i = 1:N+1
-   for k = 1:4
-       y_values(i,k) = y(k);
-   end
+   y_values(:, i) = y;
    q = [y(1);y(2)];
    p = [y(3);y(4)];
-   pd = pdot(q);
+   pd = pdot(q); %p=tidsderivata av u
    y = y + [h*p(1) + h^2*pd(1);h*p(2) + h^2*pd(2);h*pd(1);h*pd(2)];
+   %Formeln för symplektisk Euler, är egentligen bara en Taylorexpansion
 end
+y_values = y_values';
 end
 
 function pd = pdot(q)
@@ -89,9 +98,10 @@ pd = -[q(1)/(q(1)^2+q(2)^2)^(3/2);q(2)/(q(1)^2+q(2)^2)^(3/2)];
 end
 
 function y = newton_bak(y0, tol, h)
+%Newtons metod 
 maxiter = 100;
-f = @(y) y-h*kepler(y)-y0;
-Df = @(y) jacobian_bak(y, h);
+f = @(y) y-h*kepler(y)-y0; %Denna vill vi finna rötter till
+Df = @(y) jacobian_bak(y, h); %Beräknar jacobianen av f
 s = inf;
 y = y0;
 iter = 0;
@@ -105,6 +115,12 @@ while norm(s) >= tol
     y = y + s;
     iter  = iter+1;
 end
+end
+
+function y = imp_mitt(y0, N, t_end)
+h = t_end/N;
+y = y0;
+y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)];
 end
 
 function Df = jacobian_bak(y, h)
