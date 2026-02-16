@@ -15,20 +15,18 @@ q1f = y_feuler(:,1);
 q2f = y_feuler(:,2);
 
 figure
-plot(0:h2:t_end, q1f, 0:h2:t_end, q2f, 0:h2:t_end, energi_feuler)
-title('Framåt Euler med energi')
-legend('q1', 'q2', 'Energi')
+plot(q1f, q2f)
+title('Framåt Euler')
 
 %Bakåt Euler
-y_beuler = bak_euler(y0, N1, t_end); 
+y_beuler = bak_euler(y0, N1, t_end)
 energi_beuler = energi(y_beuler);
 q1b = y_beuler(:,1);
 q2b = y_beuler(:,2);
 
 figure
-plot(0:h1:t_end, q1b, 0:h1:t_end, q2b, 0:h1:t_end, energi_beuler)
-title('Bakåt Euler med energi')
-legend('q1', 'q2', 'Energi')
+plot(q1b, q2b)
+title('Bakåt Euler')
 
 %Symplektisk Euler 
 y_seuler = symp_euler(y0, N2, t_end);
@@ -37,11 +35,12 @@ q1s = y_seuler(:,1);
 q2s = y_seuler(:,2);
 
 figure
-plot(0:h2:t_end, q1s, 0:h2:t_end, q2s, 0:h2:t_end, energi_seuler)
-title('Symplektisk Euler med energi')
-legend('q1', 'q2', 'Energi')
+plot(q1s, q2s)
+title('Symplektisk Euler')
+
 %% Funktioner 
-%ATT GÖRA: Effektivare med matriser för y, snyggare med norm(q)
+%ATT GÖRA: Effektivare med matriser för y, snyggare med norm(q),
+%startgissning för Newtons metod, varför gör bakåt Euler ett stort hopp?
 
 function ydot = kepler(y)
 %y = (q1, q2, p1, p2)
@@ -69,7 +68,7 @@ function y_values = bak_euler(y0, N, t_end)
 h = t_end/N;
 y = y0;
 y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)]';
-for i  = 1:N
+for i  = 1:N+1
     y_values(:, i) = y;
     y = newton_bak(y, 10^(-6), h); %Lös olinjärt ekvationssystem med Newton
 end
