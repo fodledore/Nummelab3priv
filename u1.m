@@ -9,7 +9,7 @@ N2 = 10000; %Andra ordningens metoder
 h2 = t_end/N2;
 
 %Framåt Euler
-y_feuler = fram_euler(y0, N2, t_end);
+y_feuler = fram_euler(y0, N1, t_end);
 energi_feuler = energi(y_feuler);
 q1f = y_feuler(:,1);
 q2f = y_feuler(:,2);
@@ -19,7 +19,7 @@ plot(q1f, q2f)
 title('Framåt Euler')
 
 %Bakåt Euler
-y_beuler = bak_euler(y0, N1, t_end)
+y_beuler = bak_euler(y0, N1, t_end);
 energi_beuler = energi(y_beuler);
 q1b = y_beuler(:,1);
 q2b = y_beuler(:,2);
@@ -28,8 +28,18 @@ figure
 plot(q1b, q2b)
 title('Bakåt Euler')
 
+%Implicita mittpunktsmetoden
+y_trap = imp_mitt(y0, N2, t_end);
+energi_trap = energi(y_trap);
+q1t = y_trap(:, 1);
+q2t = y_trap(:, 2);
+
+figure
+plot(q1t, q2t)
+title('Implicita mittpunktsmetoden')
+
 %Symplektisk Euler 
-y_seuler = symp_euler(y0, N2, t_end);
+y_seuler = symp_euler(y0, N1, t_end);
 energi_seuler = energi(y_seuler);
 q1s = y_seuler(:,1);
 q2s = y_seuler(:,2);
@@ -37,6 +47,11 @@ q2s = y_seuler(:,2);
 figure
 plot(q1s, q2s)
 title('Symplektisk Euler')
+
+figure 
+plot(0:h1:t_end, energi_feuler, 0:h1:t_end, energi_beuler, 0:h1:t_end, energi_seuler, 0:h2:t_end, energi_trap)
+title('Energi som funktion av tiden')
+legend('Framåt', 'Bakåt', 'Symplektisk', 'Trapets')
 
 %% Funktioner 
 %ATT GÖRA: Effektivare med matriser för y, snyggare med norm(q),
@@ -116,12 +131,6 @@ while norm(s) >= tol
 end
 end
 
-function y = imp_mitt(y0, N, t_end)
-h = t_end/N;
-y = y0;
-y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)];
-end
-
 function Df = jacobian_bak(y, h)
 %Beräknar jacobianen bla balb alb 
 Df = zeros(4,4);
@@ -136,11 +145,47 @@ Df(2,4) = -h;
 Df = eye(4) + Df;
 end
 
+function y_values = imp_mitt(y0, N, t_end)
+h = t_end/N;
+y = y0;
+y_values = [zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1),zeros(N+1, 1)]';
+for i =1:N+1
+    y_values(:, i) = y;
+    y = newton_mitt(y, 10^(-6), h);
+end
+y_values = y_values';
+end
+
+function y = newton_mitt(y0, tol, h)
+f = @(y) y-y0-h*kepler(0.5*(y0+y));
+Df = @(y) jacobian_trap(0.5*(y0+y), h);
+s = inf;
+y = y0;
+while norm(s) >= tol
+    s = -Df(y)\f(y);
+    y = y + s;
+end
+end
+
+function Df = jacobian_trap(y, h)
+Df = zeros(4,4);
+q = [y(1);y(2)];
+r = norm(q);
+%Väldigt lik Jacobianen för Newton Bak, endast skalad med 0.5
+Df(3,1) = -h/r^3*(-1+3*q(1)^2/r^2);
+Df(3,2) = -h*3*q(1)*q(2)/r^5;
+Df(4,1) = -h*3*q(1)*q(2)/r^5;
+Df(4,2) = -h/r^3*(-1+3*q(2)^2/r^2);
+Df(1,3) = -h;
+Df(2,4) = -h;
+Df =(eye(4) + Df);
+end
+
 function H = hamiltonian(y)
 %Beräknar hamiltonianen
 q = [y(1);y(2)];
 p = [y(3);y(4)];
-H = 1/2*norm(p) - 1/(norm(q))^2;
+H = 1/2*norm(p)^2 - 1/(norm(q));
 end
 
 function E_values = energi(y_values)
