@@ -5,7 +5,7 @@ t_end = 100;
 N1 = 200000; %Första ordningens metoder
 h1 = t_end/N1;
 
-N2 = 10000; %Andra ordningens metoder
+N2 = 4000; %Andra ordningens metoder
 h2 = t_end/N2;
 
 %Framåt Euler
@@ -29,10 +29,10 @@ plot(q1b, q2b)
 title('Bakåt Euler')
 
 %Implicita mittpunktsmetoden
-y_trap = imp_mitt(y0, N2, t_end);
-energi_trap = energi(y_trap);
-q1t = y_trap(:, 1);
-q2t = y_trap(:, 2);
+y_mitt = imp_mitt(y0, N2, t_end);
+energi_mitt = energi(y_mitt);
+q1t = y_mitt(:, 1);
+q2t = y_mitt(:, 2);
 
 figure
 plot(q1t, q2t)
@@ -49,7 +49,7 @@ plot(q1s, q2s)
 title('Symplektisk Euler')
 
 figure 
-plot(0:h1:t_end, energi_feuler, 0:h1:t_end, energi_beuler, 0:h1:t_end, energi_seuler, 0:h2:t_end, energi_trap)
+plot(0:h1:t_end, energi_feuler, 0:h1:t_end, energi_beuler, 0:h1:t_end, energi_seuler, 0:h2:t_end, energi_mitt)
 title('Energi som funktion av tiden')
 legend('Framåt', 'Bakåt', 'Symplektisk', 'Trapets')
 
@@ -125,8 +125,8 @@ while norm(s) >= tol
         disp('Maxiterationer är nådda')
         break
     end
-    s = -Df(y)\f(y);
-    y = y + s;
+    s = -Df(y)\f(y); %Billigare att lösa system
+    y = y + s; 
     iter  = iter+1;
 end
 end
@@ -157,8 +157,10 @@ y_values = y_values';
 end
 
 function y = newton_mitt(y0, tol, h)
+%Newtons metod för mittpunktsmetoden, enda som skiljer sig är funktionen
+%och jacobianen
 f = @(y) y-y0-h*kepler(0.5*(y0+y));
-Df = @(y) jacobian_trap(0.5*(y0+y), h);
+Df = @(y) jacobian_mitt(0.5*(y0+y), h);
 s = inf;
 y = y0;
 while norm(s) >= tol
@@ -167,18 +169,18 @@ while norm(s) >= tol
 end
 end
 
-function Df = jacobian_trap(y, h)
+function Df = jacobian_mitt(y, h)
 Df = zeros(4,4);
 q = [y(1);y(2)];
 r = norm(q);
-%Väldigt lik Jacobianen för Newton Bak, endast skalad med 0.5
+%Väldigt lik Jacobianen för Newton Bak, 
 Df(3,1) = -h/r^3*(-1+3*q(1)^2/r^2);
 Df(3,2) = -h*3*q(1)*q(2)/r^5;
 Df(4,1) = -h*3*q(1)*q(2)/r^5;
 Df(4,2) = -h/r^3*(-1+3*q(2)^2/r^2);
 Df(1,3) = -h;
 Df(2,4) = -h;
-Df =(eye(4) + Df);
+Df = eye(4) + 0.5*Df; %Enda som skiljer är faktor 0.5, kedjeregeln
 end
 
 function H = hamiltonian(y)
