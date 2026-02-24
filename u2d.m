@@ -44,7 +44,7 @@ mov(1)=getframe(gcf); %Första frame i filmen.
 L=1;
 for m=1:M 
 p(:, m+1) = p(:, m) + dt*A*u(:,m);
-u(:, m+1) = u(:, m) + dt*p(:,m+1) + dt^2*A*u(:,m);
+u(:, m+1) = u(:, m) + dt*p(:,m+1);
 
 X = [0;x;L]; U = [0;u(:,m);0];
 plot(X, U, 'b', 'Linewidth', 1)
@@ -65,7 +65,11 @@ plot(tider,E)
 title('Energin som funktion av tiden, Neumann')
 %% FUNKTIONER
 function en  = energy(u, p, c, A)
-%tar in vektorer u och p och beräknar energin för en tidpunkt
+%tar in vektorer u och p, tidsverivatan av u, och beräknar energin för en tidpunkt
 udd = c^2*A*u;
 en = 0.5*(norm(p)^2 -(dot(u, udd)));
+end
+
+function en = energy2(u, p, c, A)
+en = 0.5*(p'*p-c^2*u'*A*u);
 end
